@@ -29,6 +29,12 @@ export interface WeeklyReview {
 
 export type View = 'dashboard' | 'settings' | 'journey';
 
+export interface NotificationPrefs {
+  doseReminder: boolean;
+  journalReminder: boolean;
+  reminderTime: string; // "HH:MM"
+}
+
 export interface Achievement {
   id: string;
   title: string;

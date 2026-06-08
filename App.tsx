@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import iconPng from './icon.png';
-import { type Protocol, type JournalEntry, type WeeklyReview, type View, CustomMetric, Achievement } from './types';
+import { type Protocol, type JournalEntry, type WeeklyReview, type View, CustomMetric, Achievement, type NotificationPrefs } from './types';
+import { checkAndSendNotifications } from './utils/notificationUtils';
 import { PROTOCOLS, HomeIcon, SettingsIcon, BookOpenIcon, DEFAULT_METRICS, ACHIEVEMENTS, FlameIcon } from './constants';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
@@ -36,12 +37,26 @@ interface AppContentProps {
 const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loadingData, setLoadingData] = useState(true);
-  
+
   const [view, setView] = useState<View>('dashboard');
   const [toastMessage, setToastMessage] = useState<string>('');
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
   const welcomeCheckCompletedForUser = useRef<string | null>(null);
   const [streak, setStreak] = useState(0);
+
+  const DEFAULT_NOTIF_PREFS: NotificationPrefs = { doseReminder: false, journalReminder: false, reminderTime: '09:00' };
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>(() => {
+    try {
+      const stored = localStorage.getItem('soma_notif_prefs');
+      return stored ? JSON.parse(stored) : DEFAULT_NOTIF_PREFS;
+    } catch { return DEFAULT_NOTIF_PREFS; }
+  });
+
+  const handleSaveNotificationPrefs = useCallback((prefs: NotificationPrefs) => {
+    setNotificationPrefs(prefs);
+    localStorage.setItem('soma_notif_prefs', JSON.stringify(prefs));
+    setToastMessage('Preferencias de notificación guardadas');
+  }, []);
 
 
   useEffect(() => {
@@ -108,7 +123,12 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
 
   useEffect(() => {
     if (!userData) return;
-    
+    checkAndSendNotifications(notificationPrefs, userData.protocol, userData.startDate, userData.journalEntries);
+  }, [userData, notificationPrefs]);
+
+  useEffect(() => {
+    if (!userData) return;
+
     // Calculate Streak
     const currentStreak = calculateStreak(userData.journalEntries);
     setStreak(currentStreak);
@@ -301,6 +321,8 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
           onLogout={handleLogout}
           onDeleteAccount={handleDeleteAccount}
           onShowWelcome={handleShowWelcomeModal}
+          notificationPrefs={notificationPrefs}
+          onSaveNotificationPrefs={handleSaveNotificationPrefs}
         />;
       default:
         return null;

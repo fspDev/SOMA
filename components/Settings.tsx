@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { type Protocol, type CustomMetric } from '../types';
+import React, { useState, useCallback, useEffect } from 'react';
+import { type Protocol, type CustomMetric, type NotificationPrefs } from '../types';
 import { PROTOCOLS, CloseIcon, PlusIcon } from '../constants';
+import { getNotificationPermission, requestNotificationPermission } from '../utils/notificationUtils';
 
 interface SettingsProps {
   currentProtocol: Protocol;
@@ -14,12 +15,15 @@ interface SettingsProps {
   onLogout: () => void;
   onDeleteAccount: () => void;
   onShowWelcome: () => void;
+  notificationPrefs: NotificationPrefs;
+  onSaveNotificationPrefs: (prefs: NotificationPrefs) => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ 
+const Settings: React.FC<SettingsProps> = ({
     currentProtocol, currentStartDate, currentUserName, currentCustomMetrics,
     theme, onThemeChange,
-    onSave, onResetData, onLogout, onDeleteAccount, onShowWelcome
+    onSave, onResetData, onLogout, onDeleteAccount, onShowWelcome,
+    notificationPrefs, onSaveNotificationPrefs,
 }) => {
   const [selectedProtocolId, setSelectedProtocolId] = useState(currentProtocol.id);
   const [startDate, setStartDate] = useState(currentStartDate);
@@ -28,6 +32,25 @@ const Settings: React.FC<SettingsProps> = ({
   const [customOffDays, setCustomOffDays] = useState(currentProtocol.id === 'custom' ? currentProtocol.offDays : 2);
   const [customMetrics, setCustomMetrics] = useState<CustomMetric[]>(currentCustomMetrics);
   const [newMetricLabel, setNewMetricLabel] = useState('');
+  const [localNotifPrefs, setLocalNotifPrefs] = useState<NotificationPrefs>(notificationPrefs);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(() => getNotificationPermission());
+
+  useEffect(() => {
+    setNotifPermission(getNotificationPermission());
+  }, []);
+
+  const handleRequestPermission = useCallback(async () => {
+    const result = await requestNotificationPermission();
+    setNotifPermission(result);
+  }, []);
+
+  const handleToggleNotif = (key: 'doseReminder' | 'journalReminder') => {
+    setLocalNotifPrefs(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleNotifTimeSave = () => {
+    onSaveNotificationPrefs(localNotifPrefs);
+  };
 
   const selectedProtocol = PROTOCOLS.find(p => p.id === selectedProtocolId) || PROTOCOLS[0];
   
@@ -174,6 +197,85 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       </div>
       
+      {/* Notificaciones */}
+      <div className="pt-5 border-t border-theme">
+        <h3 className="text-lg font-semibold text-theme-main">Notificaciones</h3>
+        <p className="mt-1 text-sm text-theme-muted">
+          Recibí recordatorios en tu dispositivo.
+        </p>
+
+        {notifPermission === 'denied' && (
+          <p className="mt-3 text-sm text-red-400">
+            Las notificaciones están bloqueadas. Activalas desde la configuración de tu navegador/app.
+          </p>
+        )}
+        {notifPermission === 'default' && (
+          <button
+            onClick={handleRequestPermission}
+            className="mt-3 px-4 py-2 bg-[#00BFA5] hover:opacity-90 text-white text-sm font-semibold rounded-lg"
+          >
+            Activar notificaciones
+          </button>
+        )}
+        {notifPermission === 'granted' && (
+          <p className="mt-2 text-sm text-[#00BFA5] font-medium">✓ Notificaciones activadas</p>
+        )}
+
+        <div className="mt-4 space-y-3">
+          {/* Toggle row helper */}
+          {([
+            { key: 'doseReminder' as const, label: 'Recordatorio de días de dosis', desc: 'Te avisa los días que corresponde tomar.' },
+            { key: 'journalReminder' as const, label: 'Recordatorio del diario', desc: 'Te avisa si aún no registraste el día.' },
+          ]).map(({ key, label, desc }) => (
+            <div key={key} className="flex items-start justify-between gap-3 p-3 bg-theme-bubble rounded-lg border border-theme">
+              <div>
+                <p className="text-sm font-medium text-theme-main">{label}</p>
+                <p className="text-xs text-theme-muted">{desc}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleToggleNotif(key)}
+                disabled={notifPermission !== 'granted'}
+                className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors ${
+                  localNotifPrefs[key] && notifPermission === 'granted'
+                    ? 'bg-[#00BFA5]'
+                    : 'bg-gray-400/40'
+                } disabled:opacity-40`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    localNotifPrefs[key] && notifPermission === 'granted' ? 'translate-x-6' : ''
+                  }`}
+                />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <label htmlFor="notif-time" className="block text-sm font-medium text-theme-main">
+            Hora del recordatorio
+          </label>
+          <div className="flex items-center gap-3 mt-1">
+            <input
+              type="time"
+              id="notif-time"
+              value={localNotifPrefs.reminderTime}
+              onChange={e => setLocalNotifPrefs(prev => ({ ...prev, reminderTime: e.target.value }))}
+              disabled={notifPermission !== 'granted'}
+              className="bg-theme-input border border-theme rounded-md p-2 text-theme-main disabled:opacity-40"
+            />
+            <button
+              onClick={handleNotifTimeSave}
+              disabled={notifPermission !== 'granted'}
+              className="px-4 py-2 bg-[#00BFA5] hover:opacity-90 text-white text-sm font-semibold rounded-lg disabled:opacity-40"
+            >
+              Guardar
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Custom Metrics Section */}
       <div className="pt-5 border-t border-theme">
         <h3 className="text-lg font-semibold text-theme-main">Personalizar Métricas</h3>
