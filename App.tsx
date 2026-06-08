@@ -26,6 +26,7 @@ interface UserData {
   email: string;
   customMetrics: CustomMetric[];
   achievements: Record<string, boolean>;
+  notificationPrefs: NotificationPrefs;
 }
 
 interface AppContentProps {
@@ -45,18 +46,18 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
   const [streak, setStreak] = useState(0);
 
   const DEFAULT_NOTIF_PREFS: NotificationPrefs = { doseReminder: false, journalReminder: false, reminderTime: '09:00' };
-  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>(() => {
-    try {
-      const stored = localStorage.getItem('soma_notif_prefs');
-      return stored ? JSON.parse(stored) : DEFAULT_NOTIF_PREFS;
-    } catch { return DEFAULT_NOTIF_PREFS; }
-  });
 
-  const handleSaveNotificationPrefs = useCallback((prefs: NotificationPrefs) => {
-    setNotificationPrefs(prefs);
-    localStorage.setItem('soma_notif_prefs', JSON.stringify(prefs));
-    setToastMessage('Preferencias de notificación guardadas');
-  }, []);
+  const handleSaveNotificationPrefs = useCallback(async (prefs: NotificationPrefs) => {
+    if (!user) return;
+    const docRef = doc(db, 'users', user.uid);
+    try {
+      await updateDoc(docRef, { notificationPrefs: prefs });
+      setToastMessage('Preferencias de notificación guardadas');
+    } catch (error) {
+      console.error('Error saving notification prefs:', error);
+      setToastMessage('Error al guardar preferencias');
+    }
+  }, [user]);
 
 
   useEffect(() => {
@@ -75,6 +76,9 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
         }
         if (!data.achievements) {
           data.achievements = {};
+        }
+        if (!data.notificationPrefs) {
+          data.notificationPrefs = DEFAULT_NOTIF_PREFS;
         }
 
         // Migrate old journal entry format
@@ -107,6 +111,7 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
           email: user.email || '',
           customMetrics: DEFAULT_METRICS,
           achievements: {},
+          notificationPrefs: DEFAULT_NOTIF_PREFS,
         };
         setDoc(docRef, initialData).then(() => {
           setUserData(initialData);
@@ -123,8 +128,8 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
 
   useEffect(() => {
     if (!userData) return;
-    checkAndSendNotifications(notificationPrefs, userData.protocol, userData.startDate, userData.journalEntries);
-  }, [userData, notificationPrefs]);
+    checkAndSendNotifications(userData.notificationPrefs, userData.protocol, userData.startDate, userData.journalEntries);
+  }, [userData]);
 
   useEffect(() => {
     if (!userData) return;
@@ -321,7 +326,7 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
           onLogout={handleLogout}
           onDeleteAccount={handleDeleteAccount}
           onShowWelcome={handleShowWelcomeModal}
-          notificationPrefs={notificationPrefs}
+          notificationPrefs={userData.notificationPrefs}
           onSaveNotificationPrefs={handleSaveNotificationPrefs}
         />;
       default:
