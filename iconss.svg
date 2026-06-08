@@ -1,0 +1,10 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- 
+    INSTRUCCIONES:
+    1. Convierte tu imagen PNG a formato Base64. Puedes usar una herramienta en línea (busca "PNG to Base64").
+    2. Copia la cadena de texto generada.
+    3. Pega la cadena de texto reemplazando la línea de abajo que dice "TU_STRING_BASE64_AQUI".
+      Ejemplo: href="data:image/png;base64,iVBORw0KGgoAAAANSU..."
+   -->
+
+</svg>

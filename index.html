@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SOMA - equilibrio entre cuerpo y conciencia</title>
+    
+    <!-- PWA Tags -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#00BFA5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SOMA">
+    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="icon" type="image/png" href="/icon.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class'
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg-main: #f4f5f6;
+        --bg-card: rgba(255, 255, 255, 0.9);
+        --bg-input: #ffffff;
+        --text-main: #1c1c1e;
+        --text-muted: #55555a;
+        --border-color: rgba(0, 0, 0, 0.08);
+        --bubble-bg: #e4e4e7;
+        --bubble-bg-hover: #d4d4d8;
+      }
+
+      .dark {
+        --bg-main: #18181b;
+        --bg-card: rgba(42, 42, 47, 0.8);
+        --bg-input: #18181b;
+        --text-main: #f0f0f0;
+        --text-muted: #a0a0a5;
+        --border-color: rgba(255, 255, 255, 0.1);
+        --bubble-bg: rgba(0, 0, 0, 0.2);
+        --bubble-bg-hover: rgba(255, 255, 255, 0.1);
+      }
+
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .bg-theme-main {
+        background-color: var(--bg-main) !important;
+      }
+      .bg-theme-card {
+        background-color: var(--bg-card) !important;
+      }
+      .bg-theme-input {
+        background-color: var(--bg-input) !important;
+      }
+      .text-theme-main {
+        color: var(--text-main) !important;
+      }
+      .text-theme-muted {
+        color: var(--text-muted) !important;
+      }
+      .border-theme {
+        border-color: var(--border-color) !important;
+      }
+      .bg-theme-bubble {
+        background-color: var(--bubble-bg) !important;
+      }
+      .hover\:bg-theme-card-hover:hover {
+        background-color: var(--bubble-bg-hover) !important;
+      }
+      .ring-offset-theme-main {
+        --tw-ring-offset-color: var(--bg-main) !important;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@19.2.0/",
+    "react": "https://aistudiocdn.com/react@19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@19.2.0/",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.4.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
