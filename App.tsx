@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import iconPng from './icon.png';
 import { type Protocol, type JournalEntry, type WeeklyReview, type View, CustomMetric, Achievement } from './types';
 import { PROTOCOLS, HomeIcon, SettingsIcon, BookOpenIcon, DEFAULT_METRICS, ACHIEVEMENTS, FlameIcon } from './constants';
 import Dashboard from './components/Dashboard';
@@ -319,7 +320,7 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
       <div className="container mx-auto max-w-2xl p-4 sm:p-6">
         <header className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <img src="/icon.png" alt="SOMA Logo" className="w-10 h-10 sm:w-12 sm:h-12"/>
+            <img src={iconPng} alt="SOMA Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain"/>
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-[#3ABDC5]">
                 SOMA
