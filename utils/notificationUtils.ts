@@ -25,6 +25,14 @@ async function show(title: string, body: string, tag: string) {
   }
 }
 
+export async function testNotification() {
+  await show(
+    '🍄 SOMA — Notificaciones activas',
+    'Las notificaciones están funcionando correctamente.',
+    'soma-test'
+  );
+}
+
 export async function checkAndSendNotifications(
   prefs: NotificationPrefs,
   protocol: Protocol,

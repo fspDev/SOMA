@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { type Protocol, type CustomMetric, type NotificationPrefs } from '../types';
 import { PROTOCOLS, CloseIcon, PlusIcon } from '../constants';
-import { getNotificationPermission, requestNotificationPermission } from '../utils/notificationUtils';
+import { getNotificationPermission, requestNotificationPermission, testNotification } from '../utils/notificationUtils';
 
 interface SettingsProps {
   currentProtocol: Protocol;
@@ -45,11 +45,23 @@ const Settings: React.FC<SettingsProps> = ({
   }, []);
 
   const handleToggleNotif = (key: 'doseReminder' | 'journalReminder') => {
-    setLocalNotifPrefs(prev => ({ ...prev, [key]: !prev[key] }));
+    setLocalNotifPrefs(prev => {
+      const updated = { ...prev, [key]: !prev[key] };
+      onSaveNotificationPrefs(updated);
+      return updated;
+    });
   };
 
-  const handleNotifTimeSave = () => {
+  const handleTimeChange = (time: string) => {
+    setLocalNotifPrefs(prev => ({ ...prev, reminderTime: time }));
+  };
+
+  const handleTimeSave = () => {
     onSaveNotificationPrefs(localNotifPrefs);
+  };
+
+  const handleTestNotification = async () => {
+    await testNotification();
   };
 
   const selectedProtocol = PROTOCOLS.find(p => p.id === selectedProtocolId) || PROTOCOLS[0];
@@ -201,33 +213,46 @@ const Settings: React.FC<SettingsProps> = ({
       <div className="pt-5 border-t border-theme">
         <h3 className="text-lg font-semibold text-theme-main">Notificaciones</h3>
         <p className="mt-1 text-sm text-theme-muted">
-          Recibí recordatorios en tu dispositivo.
+          Los recordatorios se muestran al abrir la app si ya pasó la hora configurada.
+          {' '}En iPhone requiere iOS 16.4+ y tener la app agregada al inicio.
         </p>
 
+        {/* Paso 1: permiso */}
         {notifPermission === 'denied' && (
-          <p className="mt-3 text-sm text-red-400">
-            Las notificaciones están bloqueadas. Activalas desde la configuración de tu navegador/app.
-          </p>
+          <div className="mt-3 p-3 bg-red-900/10 border border-red-500/20 rounded-lg">
+            <p className="text-sm text-red-400 font-medium">Notificaciones bloqueadas</p>
+            <p className="text-xs text-red-400/80 mt-1">
+              Entrá a la configuración de tu navegador y permitilas para este sitio.
+            </p>
+          </div>
         )}
         {notifPermission === 'default' && (
           <button
             onClick={handleRequestPermission}
-            className="mt-3 px-4 py-2 bg-[#00BFA5] hover:opacity-90 text-white text-sm font-semibold rounded-lg"
+            className="mt-3 w-full sm:w-auto px-4 py-2.5 bg-[#00BFA5] hover:opacity-90 text-white text-sm font-semibold rounded-lg"
           >
-            Activar notificaciones
+            Paso 1 — Permitir notificaciones
           </button>
         )}
         {notifPermission === 'granted' && (
-          <p className="mt-2 text-sm text-[#00BFA5] font-medium">✓ Notificaciones activadas</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span className="text-sm text-[#00BFA5] font-medium">✓ Permiso concedido</span>
+            <button
+              onClick={handleTestNotification}
+              className="px-3 py-1.5 text-xs font-semibold border border-[#00BFA5] text-[#00BFA5] rounded-lg hover:bg-[#00BFA5]/10"
+            >
+              Probar ahora
+            </button>
+          </div>
         )}
 
-        <div className="mt-4 space-y-3">
-          {/* Toggle row helper */}
+        {/* Paso 2: toggles */}
+        <div className="mt-5 space-y-3">
           {([
-            { key: 'doseReminder' as const, label: 'Recordatorio de días de dosis', desc: 'Te avisa los días que corresponde tomar.' },
-            { key: 'journalReminder' as const, label: 'Recordatorio del diario', desc: 'Te avisa si aún no registraste el día.' },
+            { key: 'doseReminder' as const, label: 'Días de dosis', desc: 'Recordatorio cuando corresponde tomar.' },
+            { key: 'journalReminder' as const, label: 'Entrada en el diario', desc: 'Recordatorio si todavía no registraste el día.' },
           ]).map(({ key, label, desc }) => (
-            <div key={key} className="flex items-start justify-between gap-3 p-3 bg-theme-bubble rounded-lg border border-theme">
+            <div key={key} className="flex items-center justify-between gap-3 p-3 bg-theme-bubble rounded-lg border border-theme">
               <div>
                 <p className="text-sm font-medium text-theme-main">{label}</p>
                 <p className="text-xs text-theme-muted">{desc}</p>
@@ -236,7 +261,8 @@ const Settings: React.FC<SettingsProps> = ({
                 type="button"
                 onClick={() => handleToggleNotif(key)}
                 disabled={notifPermission !== 'granted'}
-                className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors ${
+                aria-label={localNotifPrefs[key] ? 'Desactivar' : 'Activar'}
+                className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors focus:outline-none ${
                   localNotifPrefs[key] && notifPermission === 'granted'
                     ? 'bg-[#00BFA5]'
                     : 'bg-gray-400/40'
@@ -252,6 +278,7 @@ const Settings: React.FC<SettingsProps> = ({
           ))}
         </div>
 
+        {/* Hora */}
         <div className="mt-4">
           <label htmlFor="notif-time" className="block text-sm font-medium text-theme-main">
             Hora del recordatorio
@@ -261,16 +288,16 @@ const Settings: React.FC<SettingsProps> = ({
               type="time"
               id="notif-time"
               value={localNotifPrefs.reminderTime}
-              onChange={e => setLocalNotifPrefs(prev => ({ ...prev, reminderTime: e.target.value }))}
+              onChange={e => handleTimeChange(e.target.value)}
               disabled={notifPermission !== 'granted'}
               className="bg-theme-input border border-theme rounded-md p-2 text-theme-main disabled:opacity-40"
             />
             <button
-              onClick={handleNotifTimeSave}
+              onClick={handleTimeSave}
               disabled={notifPermission !== 'granted'}
               className="px-4 py-2 bg-[#00BFA5] hover:opacity-90 text-white text-sm font-semibold rounded-lg disabled:opacity-40"
             >
-              Guardar
+              Guardar hora
             </button>
           </div>
         </div>
