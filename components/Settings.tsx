@@ -213,8 +213,8 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       </div>
       
-      {/* Notificaciones */}
-      <div className="pt-5 border-t border-theme">
+      {/* Notificaciones — oculto hasta implementar FCM */}
+      <div className="hidden pt-5 border-t border-theme">
         <h3 className="text-lg font-semibold text-theme-main">Notificaciones</h3>
         <p className="mt-1 text-sm text-theme-muted">
           Los recordatorios se muestran al abrir la app si ya pasó la hora configurada.
