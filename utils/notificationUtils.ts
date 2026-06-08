@@ -51,14 +51,15 @@ export async function checkAndSendNotifications(
 
   if (prefs.doseReminder && localStorage.getItem(DOSE_KEY) !== today) {
     const status = getDayStatus(today, startDate, protocol);
-    if (status === 'dose') {
-      await show(
-        '🍄 Día de Dosis',
-        'Hoy es tu día de dosis. ¡No olvides registrarla en SOMA!',
-        'dose-reminder'
-      );
-      localStorage.setItem(DOSE_KEY, today);
-    }
+    const isDoseDay = status === 'dose';
+    await show(
+      isDoseDay ? '🍄 Día de Dosis' : '🌿 SOMA — Recordatorio',
+      isDoseDay
+        ? 'Hoy es tu día de dosis. ¡No olvides registrarla en SOMA!'
+        : 'Día de descanso. Recuerda revisar tu progreso en SOMA.',
+      'dose-reminder'
+    );
+    localStorage.setItem(DOSE_KEY, today);
   }
 
   if (prefs.journalReminder && localStorage.getItem(JOURNAL_KEY) !== today && !journalEntries[today]) {
