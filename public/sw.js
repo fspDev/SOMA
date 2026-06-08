@@ -1,4 +1,4 @@
-const CACHE_NAME = 'SOMA-cache-v2';
+const CACHE_NAME = 'SOMA-cache-v3';
 
 self.addEventListener('install', event => {
   const base = self.registration.scope;
