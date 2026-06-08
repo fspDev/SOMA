@@ -79,6 +79,7 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
         }
         if (!data.notificationPrefs) {
           data.notificationPrefs = DEFAULT_NOTIF_PREFS;
+          updateDoc(docRef, { notificationPrefs: DEFAULT_NOTIF_PREFS }).catch(console.error);
         }
 
         // Migrate old journal entry format
@@ -129,6 +130,10 @@ const AppContent: React.FC<AppContentProps> = ({ user, theme, setTheme }) => {
   useEffect(() => {
     if (!userData) return;
     checkAndSendNotifications(userData.notificationPrefs, userData.protocol, userData.startDate, userData.journalEntries);
+    const id = setInterval(() => {
+      checkAndSendNotifications(userData.notificationPrefs, userData.protocol, userData.startDate, userData.journalEntries);
+    }, 60_000);
+    return () => clearInterval(id);
   }, [userData]);
 
   useEffect(() => {

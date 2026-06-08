@@ -39,6 +39,10 @@ const Settings: React.FC<SettingsProps> = ({
     setNotifPermission(getNotificationPermission());
   }, []);
 
+  useEffect(() => {
+    setLocalNotifPrefs(notificationPrefs);
+  }, [notificationPrefs]);
+
   const handleRequestPermission = useCallback(async () => {
     const result = await requestNotificationPermission();
     setNotifPermission(result);
