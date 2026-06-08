@@ -1,19 +1,21 @@
 const CACHE_NAME = 'SOMA-cache-v5';
 
+// Only cache static assets that never change (icons, manifest)
+// index.html is intentionally excluded — it must always be fetched fresh
+// so new JS/CSS bundles are picked up after each deploy.
+const STATIC_ASSETS = [
+  'icon-192.png',
+  'icon-512.png',
+  'manifest.webmanifest',
+];
+
 self.addEventListener('install', event => {
   const base = self.registration.scope;
-  const urlsToCache = [
-    base,
-    base + 'index.html',
-    base + 'manifest.webmanifest',
-    base + 'icon-192.png',
-    base + 'icon-512.png',
-  ];
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache =>
       Promise.all(
-        urlsToCache.map(url =>
-          cache.add(url).catch(() => {})
+        STATIC_ASSETS.map(file =>
+          cache.add(base + file).catch(() => {})
         )
       )
     )
@@ -30,6 +32,40 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  const isHTML = event.request.headers.get('accept')?.includes('text/html');
+  const isAsset = url.pathname.includes('/assets/');
+
+  // HTML (index.html): network-first, fall back to cache only if offline
+  if (isHTML) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Versioned JS/CSS assets: cache-first (content-hashed, never change)
+  if (isAsset) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Static assets (icons, manifest): cache-first
   event.respondWith(
     caches.match(event.request).then(response => {
       if (response) return response;
