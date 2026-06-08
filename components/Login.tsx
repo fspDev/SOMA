@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { auth } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { MushroomIcon } from '../constants';
+import iconPng from '../icon.png';
 
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -56,7 +57,7 @@ const Login: React.FC = () => {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-4 mb-2">
-                <img src="/icon.png" alt="SOMA Logo" className="w-12 h-12 sm:w-14 sm:h-14 object-contain"/>
+                <img src={iconPng} alt="SOMA Logo" className="w-12 h-12 sm:w-14 sm:h-14 object-contain"/>
                 <h1 className="text-4xl sm:text-5xl font-bold text-[#3ABDC5]">
                 SOMA
                 </h1>
